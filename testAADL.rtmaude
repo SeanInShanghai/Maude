@@ -1,0 +1,118 @@
+
+(tomod TRANSFOR is
+
+   protecting NAT .
+   protecting NAT-TIME-DOMAIN-WITH-INF .
+   
+   sorts PortState ThreadState File Set .
+   
+   class Thread | IPort : PortState, OPort : PortState, TState : ThreadState, InBufferPort : File, AccessData : File, OutBufferPort : File, MaxPreempt : Nat, MaxData : Nat, NBS : Set .
+
+   sort Sstate .
+      
+   class ThreadImpl | Substate : Sstate, Period : Time, Execution-time : Time, Clock-P : Time, Clock-C : Time . 
+   
+   subclass ThreadImpl < Thread .
+   
+   subsort Sstate < ThreadState .
+   
+   
+   vars R R' R1 R'' : Time .
+   vars T1 T2 Imp : Oid .
+   vars waitIn waitOut receive NoPort : PortState .
+   vars wait compute : ThreadState .
+   vars noSub Ready Complete Running subS : Sstate .
+   vars DT L L2 EmptyFile Temp2 : File .
+   vars N N1 : Nat .
+   
+   op from_to_transfer_ : Oid Oid File -> Msg .
+   op dly : Msg Time -> Msg .
+   op Queu_ : File -> File .
+   op Head_ : File -> File .
+   
+   op none : -> File [ctor] .
+   op _;_ : File File -> File [ctor assoc comm id: none] .
+   
+   rl [Data-Receive]: 
+            (from T1 to T2 transfer DT)
+            < T2 : ThreadImpl | IPort : waitIn, TState : wait, Substate : noSub, Clock-P : 0, Clock-C : 0, Period : R, Execution-time : R', InBufferPort : L2 > --- wrong => IPort: waitIn , right => IPort : waitIn
+            =>
+            < T2 : ThreadImpl | IPort : receive, TState : compute, Substate : Ready, Period : R， Exection-time : R', Clock-P : R, Clock-C : R', MaxData : 0, MaxPreempt : 0, InBufferPort : DT; L2 > .
+   
+   
+   rl [Data-Send]:
+            < T1 : ThreadImpl | OPort : waitOut， TState : compute, Substate : Complete, OutBufferPort : L; DT, NBS : (T2 & R), Clock-P : R1, Clock-C : R2, MaxPreempt : N, MaxData : N1 >
+            =>
+            < T1 : ThreadImpl | OPort : waitOut, TState : wait, Substate : noSub, OutBufferPort : L, NBS : (T2 & R), Clock-P : 0, Clock-C : 0, MaxPreempt : 0, MaxData : 0 > .
+            dly(from T1 To T2 transfer DT, R) .
+   
+   
+   
+   ***(
+       Specification of AADL thread behaviour
+   ***)
+   
+     
+   crl [init]:
+            < Imp : ThreadImpl | AccessData : EmptyFile, InBufferPort : L, Substate : Ready, Clock-C : R' > --- I forgot the declare of 'Imp' 
+            =>
+            < Imp : ThreadImpl | AccessData : Head(L), InBufferPort : Queu(L), Substate : Ready, Clock-C : R' > 
+            if (R' > 0) .
+            
+   crl [complete-Rec]:
+            < Imp : ThreadImpl | IPort : receive, TState : compute, Substate : subS, AccessData : Temp2, OutBufferPort : L, OPort : waitOut, Clock-P : R, Clock-C : R' >
+            => 
+            < Imp : ThreadImpl | IPort : waitIn, TState : compute, AccessData : EmptyFile, OutBufferPort : Temp2 ; L, Substate : Complete, OPort : waitOut, Clock-P : R, Clock-C : R' >
+            if (R == 0) .
+   
+   
+   rl [finish]:
+            < Imp : ThreadImpl | IPort : receive, TState : compute, Substate : Complete, OPort : NoPort, Clock-P : R, Clock-C : R', MaxPreempt : N, MaxData : N1 >
+            =>
+            < Imp : ThreadImpl | IPort : waitIn, TState : wait, Substate : noSub, OPort : NoPort, Clock-P : 0, Clock-C : 0, MaxPreempt : 0, MaxData : 0 > .
+   
+   
+   ***(
+       The tick rule of the system
+   ***) 
+   crl [tick] : {C:Configuration} => {delta(C:Configuration, R)} in time R if (R <= mte(C:Configuration)) [nonexec] .
+   
+   
+   ***(
+       The elspsed time on thread configuration
+   ***)
+   op delta : Configuration Time -> Configuration [frozen (1)] .
+   
+   eq delta(none, R) = none .
+   eq delta(NeC:NEConfiguration NeC':NEConfiguration, R) =
+            delta(NeC:NEConfiguration, R) delta(NeC':NEConfiguration, R) .
+   eq delta(< Imp : ThreadImpl | Substate : Running, Clock-P : R, Clock-C : R' >, R'' ) = < Imp : ThreadImpl | Substate : Running, Clock-P : R monus R'', Clock-C : R' monus R'' > .
+   
+   
+   op mte : Configuration -> TimeInf [frozen (1)] .
+   eq mte(none) = INF .
+   ceq mte(NeC:NEConfiguration NeC':NEConfiguration) =
+       min(mte(NeC:NEConfiguration), mte(NeC':NEConfiguration))
+       if (NeC:NEConfiguration =/= none) /\ (NeC':NEConfiguration =/= none) .
+   
+   
+   
+endtom)
+
+
+(tomod TEST-TRANSFOR is including TRANSFOR .
+
+    op initState : -> GlobalSystem .
+    
+    
+    eq initState = {
+		< T1 : ThreadImpl | Substate : noSub, Period : 1, Execution-time : 1, Clock-P : 1, Clock-C : 1 > 
+	    < T2 : ThreadImpl | Substate : noSub, Period : 1, Execution-time : 1, Clock-P : 1, Clock-C : 1 > 
+    } .
+    
+    
+endtom)
+
+***(
+(tsearch [1] initState =>* {< T1 : ThreadImpl | Substate : noSub, Period : 1, Execution-time : 1, Clock-P : 0, Clock-C : 0 >  < T2 : ThreadImpl | Substate : noSub, Period : 1, Execution-time : 1, Clock-P : 0, Clock-C : 0 >} in time < 12 .)
+***)
