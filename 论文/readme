@@ -1,0 +1,26 @@
+本文显示论文写作过程中的笔记
+
+概述
+1、 介绍
+1.1  研究背景
+1.2  研究现状与问题
+1.3  本文完成的工作
+1.4  本文的内容与结构
+
+2、 AADL的设计方法和Real-Time Maude的形式化分析方法
+2.1  AADL介绍
+2.2  Real-Time Maude介绍
+2.3  重写逻辑
+2.4  本章小结
+3、 Real-Time Maude形式化验证AADL中Thread模型方法设计
+3.1  AADL中Thread的类结构通过Real-Time Maude描述
+3.2  AADL中Thread的时间属性通过Real-Time Maude描述
+3.3  AADL中Thread的空间属性通过Real-Time Maude描述
+3.4  本章小结
+4、 实例分析
+4.1  案例的描述
+4.2  AADL建模
+4.3  Real-Time Maude建模
+4.4  分析Real-Time Maude验证结果
+4.5  本章小结
+5、 工作小结与展望

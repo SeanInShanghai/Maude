@@ -1,0 +1,26 @@
+3. Real-Time Maude形式化验证AADL中Thread模型方法设计
+3.1 AADL中Thread的类结构通过Real-Time Maude描述
+AADL中的Thread类是AADL唯一具有执行语义的类。
+AADL中Thread类的基本语义是：
+thread <name>
+  extends
+  features
+  flows
+  properties
+AADL中的类通过实现类型来定义可以定义对象的类，对于Thread类来讲，就是通过实现的方式，来定义新的类。
+AADL中Thread的实现类的基本语言是：
+thread implementation <typeidentifier> <implementationidentifier>
+  extends
+  refines type
+  subcomponents
+  calls
+  connections
+  flows
+  modes
+  properties
+
+使用Maude语言，对AADL中的类进行重写，Thread和ThreadImpl分别代表AADL中类的声明和AADL中类实现的声明。
+转化规则如下：
+class Thread | IPort : PortState, OPort : PortState, TState : ThreadState, InBufferPort : File, AccessData : File, OutBufferPort : File, MaxPreempt : Nat, MaxData : Nat, NBS : Set .
+
+class ThreadImpl | Substate : Sstate, Period : Time, Execution-time : Time, Clock-P : Time, Clock-C : Time . 
